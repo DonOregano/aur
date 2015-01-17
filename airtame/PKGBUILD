@@ -1,0 +1,29 @@
+# Maintainer: Lars Hagström <lars@foldspace.nu>
+pkgname=airtame
+pkgver=0.1.5
+pkgrel=1
+pkgdesc="Stream your display to an airtame dongle."
+arch=('x86_64')
+url="http://www.airtame.com"
+license=('Proprietary')
+groups=()
+depends=()
+makedepends=()
+options=(!emptydirs)
+install=
+source=("http://builds.airtame.com/downloads/staging/lin-x64/airtame-installer-v0.1.5-x64.sh")
+sha1sums=('4b172d0663ce77655d25d5eb6b11e788e18aa97e')
+backup=()
+
+package() {
+  cd "$srcdir"
+  sh airtame-installer*.sh --noexec
+  install -d ${pkgdir}/opt/airtame
+  install -d ${pkgdir}/opt/airtame/bin
+  install -d ${pkgdir}/opt/airtame/lib
+  cp -r airtame-streamer/bin ${pkgdir}/opt/airtame/bin
+  cp -r airtame-streamer/lib ${pkgdir}/opt/airtame/lib
+  ln -s ${pkgdir}/opt/airtame/bin/streamer.sh ${pkgdir}/usr/bin/airtame-server
+  ln -s ${pkgdir}/opt/airtame/bin/airtame-tray-cli ${pkgdir}/usr/bin/
+}
+
