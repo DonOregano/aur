@@ -1,34 +1,52 @@
 # Maintainer: Lars Hagström <lars@foldspace.nu>
 pkgname=airtame-streamer
 pkgver=0.1.5
-pkgrel=1
+pkgrel=2
 pkgdesc="Stream your display to an airtame dongle."
 arch=('x86_64')
 url="http://www.airtame.com"
 license=('Proprietary')
 groups=()
-depends=()
+depends=("zlog-airtame-git" "ffmpeg-compat")
 makedepends=()
 #options=(!emptydirs)
 install=
 source=("http://builds.airtame.com/downloads/staging/lin-x64/airtame-installer-v0.1.5-x64.sh"
        "streamer.sh")
 sha1sums=('4b172d0663ce77655d25d5eb6b11e788e18aa97e'
-          '671045700b24c75402b20730cb572b89a4ac9f30')
+          '1bd73a4d0b4acd9d14c24bf188ae57d57d182051')
 backup=()
 
 package() {
   cd "$srcdir"
+
+  #unpack
   sh airtame-installer*.sh --noexec
+
+  #create directories
   install -d ${pkgdir}/opt/airtame
+  install -d ${pkgdir}/opt/airtame/bin
+  install -d ${pkgdir}/opt/airtame/lib
   install -d ${pkgdir}/usr/bin
+  install -d ${pkgdir}/usr/lib
+
+  #copy our own streamer script
   cp streamer.sh ${pkgdir}/usr/bin/airtame-streamer
 
-  cp -r airtame-streamer/bin ${pkgdir}/opt/airtame/
-  #remove their streamer.sh, we want our own!
-  rm ${pkgdir}/opt/airtame/bin/streamer.sh
-  cp -r airtame-streamer/lib ${pkgdir}/opt/airtame/
+  #copy the two executables we need to bin directory
+  cp airtame-streamer/bin/airtame-server ${pkgdir}/opt/airtame/bin
+  cp airtame-streamer/bin/airtame-tray-cli ${pkgdir}/opt/airtame/bin
 
+  #copy the modules
+  cp -r airtame-streamer/lib/airtame-modules ${pkgdir}/opt/airtame/modules
+
+  #copy the airtame shared libraries only (the other libraries we use from our dependencies)
+  cp airtame-streamer/lib/libairtame-* ${pkgdir}/usr/lib
+
+  #copy the shared libraries that we can't reproduce on arch at the moment
+  cp airtame-streamer/lib/libx264.so.144 ${pkgdir}/opt/airtame/lib
+
+  #make a link to the tray app
   ln -s /opt/airtame/bin/airtame-tray-cli ${pkgdir}/usr/bin/
 }
 
