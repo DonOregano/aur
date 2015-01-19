@@ -15,11 +15,13 @@ install=
 source=("http://builds.airtame.com/downloads/staging/lin-x64/airtame-installer-v0.1.5-x64.sh"
         "streamer.sh"
         "tray-cli.sh"
-        "airtame-streamer.service")
+        "airtame-streamer.service"
+        "airtame-tray")
 sha1sums=('4b172d0663ce77655d25d5eb6b11e788e18aa97e'
           '1bd73a4d0b4acd9d14c24bf188ae57d57d182051'
           '7964ed3a8954488ccfc5b4feac363f72eb3468a0'
-          '439181d522ef761638009f1bd20ce788e9d598b5')
+          '439181d522ef761638009f1bd20ce788e9d598b5'
+          'bf40d0655c69a70e5bccd684de24fc3928426e05')
 backup=()
 
 package() {
@@ -39,6 +41,7 @@ package() {
   #copy our own scripts
   cp streamer.sh ${pkgdir}/usr/bin/airtame-streamer
   cp tray-cli.sh ${pkgdir}/usr/bin/airtame-tray-cli
+  cp airtame-tray ${pkgdir}/usr/bin/airtame-tray
 
   #install our systemd user service
   cp airtame-streamer.service ${pkgdir}/usr/lib/systemd/user/
