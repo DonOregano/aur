@@ -12,9 +12,11 @@ makedepends=()
 #options=(!emptydirs)
 install=
 source=("http://builds.airtame.com/downloads/staging/lin-x64/airtame-installer-v0.1.5-x64.sh"
-       "streamer.sh")
+        "streamer.sh"
+        "tray-cli.sh")
 sha1sums=('4b172d0663ce77655d25d5eb6b11e788e18aa97e'
-          '1bd73a4d0b4acd9d14c24bf188ae57d57d182051')
+          '1bd73a4d0b4acd9d14c24bf188ae57d57d182051'
+          'c32b4504235a8f5ea352080f7331496169582e04')
 backup=()
 
 package() {
@@ -30,8 +32,9 @@ package() {
   install -d ${pkgdir}/usr/bin
   install -d ${pkgdir}/usr/lib
 
-  #copy our own streamer script
+  #copy our own scripts
   cp streamer.sh ${pkgdir}/usr/bin/airtame-streamer
+  cp tray-cli.sh ${pkgdir}/usr/bin/airtame-tray-cli
 
   #copy the two executables we need to bin directory
   cp airtame-streamer/bin/airtame-server ${pkgdir}/opt/airtame/bin
@@ -45,8 +48,5 @@ package() {
 
   #copy the shared libraries that we can't reproduce on arch at the moment
   cp airtame-streamer/lib/libx264.so.144 ${pkgdir}/opt/airtame/lib
-
-  #make a link to the tray app
-  ln -s /opt/airtame/bin/airtame-tray-cli ${pkgdir}/usr/bin/
 }
 
