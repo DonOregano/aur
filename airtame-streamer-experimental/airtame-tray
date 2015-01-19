@@ -1,17 +1,51 @@
 #!/usr/bin/env python3
 
-import sys
+from __future__ import print_function
+import sys, subprocess
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
+from PyQt5 import QtCore
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def __init__(self, icon, parent=None):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
-        menu = QtWidgets.QMenu(parent)
-        exitAction = menu.addAction("Exit")
-        exitAction.triggered.connect(QtWidgets.QApplication.quit)
-        self.setContextMenu(menu)
+        self.activated.connect(self.update)
+        self.menu = QtWidgets.QMenu(parent)
+        self.toggleServiceAction = self.menu.addAction("Restart Streaming Service")
+        self.toggleServiceAction.triggered.connect(self.toggleService)
+
+        self.menu.addAction("Stream to 'airtame'").triggered.connect(self.stream)
+
+        self.menu.addAction("Exit").triggered.connect(self.exit)
+        self.setContextMenu(self.menu)
+
+    def update(self):
+        output = subprocess.check_output(("systemctl","--user","show","airtame-streamer.service"))
+        if output.find(b"ActiveState=active") != -1:
+            self.toggleServiceAction.setText("Stop Streaming Service")
+        elif output.find(b"ActiveState=inactive") != -1:
+            self.toggleServiceAction.setText("Start Streaming Service")
+        else:
+            self.toggleServiceAction.setText("Restart Streaming Service")
+
+    def exit(self):
+        print("Exiting")
+        QtWidgets.QApplication.quit()
+
+    def toggleService(self):
+        print (self.toggleServiceAction.text())
+        if self.toggleServiceAction.text() == "Start Streaming Service":
+            subprocess.call(("systemctl","--user","start","airtame-streamer.service"))
+        elif self.toggleServiceAction.text() == "Stop Streaming Service":
+            subprocess.call(("systemctl","--user","stop","airtame-streamer.service"))
+        elif self.toggleServiceAction.text() == "Restart Streaming Service":
+            subprocess.call(("systemctl","--user","restart","airtame-streamer.service"))
+        else:
+            print("wut?")
+
+    def stream(self):
+        subprocess.call(("airtame-tray-cli", "-c", "airtame"))
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
