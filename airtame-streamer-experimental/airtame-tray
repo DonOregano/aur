@@ -40,6 +40,8 @@ def enqueue_output(out, queue):
             queue.put((match.group(1),match.group(2)))
     out.close()
 
+def sendmessage(title, message):
+    subprocess.call(("notify-send", title, message, "--icon=info"))
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
@@ -102,10 +104,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def collectScanResults(self):
         while not self.scanQueue.empty():
             res = self.scanQueue.get_nowait()
-            print(res)
             if res not in self.devices:
                 self.devices.add(res)
                 self.update()
+                sendmessage("Airtame detected", "Name: " + res[0] + "\nAddress: " + res[1])
 
     def exit(self):
         print("Exiting")
@@ -128,13 +130,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             print("wut?")
 
     def stream(self, name):
-        subprocess.call(("airtame-tray-cli", "-c", name))
+        xrandr_output = subprocess.check_output(("xrandr")).decode("utf-8")
+        if xrandr_output.count(" connected"):
+            sendmessage("NO!", "More than one screen connected, will not start streaming")
+            return
+        subprocess.call(("airtame-tray-cli", "-m", "0", "-f", "30", "-q", "3", "-c", name))
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
     w = QtWidgets.QWidget()
-    trayIcon = SystemTrayIcon(QtGui.QIcon("logo.png"), w)
+    trayIcon = SystemTrayIcon(QtGui.QIcon("/opt/airtame/logo.png"), w)
 
     trayIcon.show()
     sys.exit(app.exec_())
