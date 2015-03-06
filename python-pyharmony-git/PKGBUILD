@@ -1,6 +1,6 @@
 # Maintainer: Lars HagstrÃ¶m <lars@foldspace.nu>
-pkgname=pyharmony-git
-pkgver=1
+pkgname=python-pyharmony-git
+pkgver=r20.1b20822
 pkgrel=1
 pkgdesc="Python library for connecting to and controlling the Logitech Harmony Link"
 arch=('any')
