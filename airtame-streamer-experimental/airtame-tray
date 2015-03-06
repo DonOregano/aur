@@ -131,10 +131,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def stream(self, name):
         xrandr_output = subprocess.check_output(("xrandr")).decode("utf-8")
-        if xrandr_output.count(" connected"):
+        if xrandr_output.count("\*"):
             sendmessage("NO!", "More than one screen connected, will not start streaming")
             return
-        subprocess.call(("airtame-tray-cli", "-m", "0", "-f", "30", "-q", "3", "-c", name))
+        subprocess.call(("airtame-tray-cli", "-m", "1", "-f", "30", "-q", "3", "-c", name))
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

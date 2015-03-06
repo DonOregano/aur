@@ -1,7 +1,7 @@
 # Maintainer: Lars Hagström <lars@foldspace.nu>
 pkgname=airtame-streamer-experimental
 pkgver=0.1.5
-pkgrel=1
+pkgrel=2
 pkgdesc="Stream your display to an airtame dongle."
 arch=('x86_64')
 url="http://www.airtame.com"
@@ -22,7 +22,7 @@ sha1sums=('4b172d0663ce77655d25d5eb6b11e788e18aa97e'
           '1bd73a4d0b4acd9d14c24bf188ae57d57d182051'
           '7964ed3a8954488ccfc5b4feac363f72eb3468a0'
           '439181d522ef761638009f1bd20ce788e9d598b5'
-          '5bd26b8f93eaee52c030e3bf3d8a1bca0e027b67'
+          '6a32f7de01f52ffa5af2bdb987c57bbfbd7af22e'
           '6a396ae0060c1156f4bf887ec45346cc04bbab73')
 backup=()
 
