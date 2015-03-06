@@ -1,0 +1,28 @@
+# Maintainer: Lars HagstrÃ¶m <lars@foldspace.nu>
+pkgname=pyharmony-git
+pkgver=1
+pkgrel=1
+pkgdesc="Python library for connecting to and controlling the Logitech Harmony Link"
+arch=('any')
+url="https://github.com/DonOregano/pyharmony"
+license=('Custom')
+groups=()
+depends=('python-sleekxmpp')
+makedepends=('git' 'python-setuptools')
+options=(!emptydirs)
+install=
+source=("$pkgname"::"git+https://github.com/DonOregano/pyharmony.git")
+sha1sums=('SKIP')
+backup=()
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+
+package() {
+  cd "$srcdir/$pkgname"
+  python setup.py install --root="$pkgdir/" --optimize=1
+}
+
