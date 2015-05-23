@@ -10,14 +10,16 @@ groups=()
 provides=("airtame-streamer")
 conflicts=("airtame-streamer")
 depends=("ffmpeg-compat" "python" "python-pyqt5")
-makedepends=(unzip)
+makedepends=("unzip" "yasm")
 install=
 source=("http://downloads.airtame.com/update/beta/lin_x64/AIRTAME-v${pkgver//_/-}_x64.tar.gz"
         "jsonrpcc::git+https://github.com/airtame/jsonrpc-c.git"
         "enet::git+https://github.com/airtame/enet.git#branch=development"
         "zlog::git+https://github.com/airtame/zlog.git"
+        "x264::git+git://git.videolan.org/x264.git"
         "streamer.sh")
 md5sums=('3cb4a74a0cf2127761d98d89a6930e37'
+         'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
@@ -42,6 +44,11 @@ build() {
 
   cd "${srcdir}/zlog"
   make CFLAGS=-Wno-error=cpp
+
+  cd "${srcdir}/x264"
+  ./configure --enable-shared
+  make
+
 }
 
 package() {
@@ -74,11 +81,10 @@ package() {
   #copy the airtame shared libraries only (the other libraries we use from our dependencies)
   cp streamer/lib/libairtame-* ${pkgdir}/opt/airtame/lib
 
-  #copy the libraries that airtame have forked, and that we've built
+  #copy the libraries that airtame have forked or used newer versions of,
+  #and that we've built in the build() function
   cp jsonrpcc/src/.libs/libjsonrpcc.so.0.0.0 ${pkgdir}/opt/airtame/lib/libjsonrpcc.so.0
   cp enet/.libs/libenet.so.7.0.0 ${pkgdir}/opt/airtame/lib/libenet.so.7
   cp zlog/src/libzlog.so.1.2 ${pkgdir}/opt/airtame/lib
-
-  #copy the shared libraries that we can't reproduce on arch at the moment
-  cp streamer/lib/libx264.so.146 ${pkgdir}/opt/airtame/lib
+  cp x264/libx264.so.146 ${pkgdir}/opt/airtame/lib
 }
