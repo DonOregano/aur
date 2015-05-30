@@ -17,17 +17,19 @@ source=("http://downloads.airtame.com/update/beta/lin_x64/AIRTAME-v${pkgver//_/-
         "enet::git+https://github.com/airtame/enet.git#branch=development"
         "zlog::git+https://github.com/airtame/zlog.git"
         "x264::git+git://git.videolan.org/x264.git"
-        "streamer.sh")
+        "streamer.sh"
+        "airtame-streamer.service")
 md5sums=('3cb4a74a0cf2127761d98d89a6930e37'
          'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
-         '785d2c8f992b595a1bff48d6ec82c058')
+         '785d2c8f992b595a1bff48d6ec82c058'
+         '99547aa5d4ff813ed62a5378673a4495')
 
 #not updated yet
 #        "airtame-tray")
-#        "airtame-streamer.service"
+
 
 backup=()
 
@@ -61,8 +63,7 @@ package() {
   install -d ${pkgdir}/opt/airtame/bin
   install -d ${pkgdir}/opt/airtame/lib
   install -d ${pkgdir}/usr/bin
-  #install -d ${pkgdir}/usr/lib
-  #install -d ${pkgdir}/usr/lib/systemd/user
+  install -d ${pkgdir}/usr/lib/systemd/user
 
   #copy our own scripts
   cp streamer.sh ${pkgdir}/usr/bin/airtame-streamer
@@ -70,7 +71,7 @@ package() {
   cp views/assets/tray/icon-blue@2x.png ${pkgdir}/opt/airtame/logo.png
 
   #install our systemd user service
-  #cp airtame-streamer.service ${pkgdir}/usr/lib/systemd/user/
+  cp airtame-streamer.service ${pkgdir}/usr/lib/systemd/user/
 
   #copy the two executables we need to bin directory
   cp streamer/bin/airtame-streamer ${pkgdir}/opt/airtame/bin

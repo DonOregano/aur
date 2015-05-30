@@ -3,6 +3,7 @@
 ###############################################################################
 #
 # Copyright Lars Hagström, 2015 (lars@foldspace.nu)
+# Copyright Niels Simonsen, 2015 (nesnomis@gmail.com)
 #
 ###############################################################################
 #
@@ -20,15 +21,43 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
-
-from __future__ import print_function
-import sys, subprocess, re
+import sys, subprocess, re, traceback, time
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from threading import Thread
 from queue import Queue, Empty
+import json
+import socket
+import socketserver
 
+def send_json(message):
+    TCP_IP = '127.0.0.1'
+    TCP_PORT = 8004
+    
+    if "id" not in message:
+        message["id"] = "null"
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    connected = False
+    for i in range(3):
+        try:
+            s.connect((TCP_IP, TCP_PORT))
+            connected = True
+        except:
+            time.sleep(0.5)
+    if not connected:
+        raise Exception("failed to connect")
+    s.send(json.dumps(message).encode("UTF-8"))
+    
+    result = json.loads(s.recv(1024*8).decode("UTF-8"))
+    s.close()
+    #print (result)
+    if "result" in result and result["result"] != "ok":
+        raise Exception ("Command", message, "resulted in an error:", result)
+    if "error" in result:
+        raise Exception ("Command", message, "resulted in an error:", result)
+"""
 def enqueue_output(out, queue):
     pattern = re.compile(r"^ *[0-9]+\. (.*) \(([0-9\.]+)\)")
     while True:
@@ -39,6 +68,7 @@ def enqueue_output(out, queue):
         if match is not None:
             queue.put((match.group(1),match.group(2)))
     out.close()
+"""
 
 def sendmessage(title, message):
     subprocess.call(("notify-send", title, message, "--icon=info"))
@@ -52,14 +82,18 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.toggleServiceAction = self.menu.addAction("Restart Streaming Service")
         self.toggleServiceAction.triggered.connect(self.toggleService)
 
-        self.deviceMenu = self.menu.addMenu("Stream to")
+        self.menu.addSeparator()
+        #self.deviceMenu = self.menu.addMenu("Stream to")
 
+        self.connectIp = self.menu.addAction("Connect to IP")
+        self.connectIp.triggered.connect(self.inputIpDialog)
+        
         self.menu.addSeparator()
         self.menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(self.menu)
 
-        self.scanProc = None
-        self.devices = set()
+        #self.scanProc = None
+        #self.devices = set()
 
     def update(self):
         running = False
@@ -72,14 +106,14 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         else:
             self.toggleServiceAction.setText("Restart Streaming Service")
 
-        self.deviceMenu.setEnabled(running and len(self.devices) > 0)
+        #self.deviceMenu.setEnabled(running and len(self.devices) > 0)
 
-        if running:
-            self.deviceMenu.clear()
-            for (name,addr) in self.devices:
-                action = self.deviceMenu.addAction("Stream to " + name)
-                action.triggered.connect(lambda: self.stream(name))
-
+        #if running:
+        #    self.deviceMenu.clear()
+        #    for (name,addr) in self.devices:
+        #        action = self.deviceMenu.addAction("Stream to " + name)
+        #        action.triggered.connect(lambda: self.stream(name))
+    """
     def startScan(self):
         if self.scanProc is None:
             self.scanProc = subprocess.Popen(("stdbuf", "-oL", "airtame-tray-cli", "-s"),
@@ -108,40 +142,112 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
                 self.devices.add(res)
                 self.update()
                 sendmessage("Airtame detected", "Name: " + res[0] + "\nAddress: " + res[1])
-
+    """
     def exit(self):
         print("Exiting")
         subprocess.call(("systemctl","--user","stop","airtame-streamer.service"))
-        self.stopScan()
+        #self.stopScan()
         QtWidgets.QApplication.quit()
 
     def toggleService(self):
         print (self.toggleServiceAction.text())
+        init = False
         if self.toggleServiceAction.text() == "Start Streaming Service":
             subprocess.call(("systemctl","--user","start","airtame-streamer.service"))
-            self.startScan()
+            init = True
         elif self.toggleServiceAction.text() == "Stop Streaming Service":
             subprocess.call(("systemctl","--user","stop","airtame-streamer.service"))
-            self.stopScan()
         elif self.toggleServiceAction.text() == "Restart Streaming Service":
             subprocess.call(("systemctl","--user","restart","airtame-streamer.service"))
-            self.startScan()
-        else:
-            print("wut?")
+            init = True
+
+        if init:
+            send_json({"method": "initStreamer"})
+            send_json({"method": "registerListener",
+                       "params" : ["127.0.0.1", "8005"]})
+
+    def inputIpDialog(self):
+        text, ok = QtWidgets.QInputDialog.getText(None,
+                                                  'Airtame IP',
+                                                  'Enter Airtame IP address:')
+        if ok:
+            self.stream(text)
 
     def stream(self, name):
         xrandr_output = subprocess.check_output(("xrandr")).decode("utf-8")
         if xrandr_output.count("\*"):
             sendmessage("NO!", "More than one screen connected, will not start streaming")
             return
-        subprocess.call(("airtame-tray-cli", "-m", "1", "-f", "30", "-q", "3", "-c", name))
+        send_json({"method": "connect",
+                   "params" : [name, "8002"]})
+
+"""
+class InfoListener(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+
+class InfoListenerHandler(socketserver.StreamRequestHandler):
+    def handle(self):
+        try:
+            self.request.setblocking(True)
+            data = ""
+            while True:
+                data += self.rfile.readline().decode("ascii")
+                print(data)
+                break
+                #TODO: make a proper message pump here.
+                #data = json.loads(self.request.recv(8*1024).decode("UTF-8"))
+                # process the data, i.e. print it:
+                #print( data)
+                # send some 'ok' back
+                #self.request.sendall(json.dumps({"id" : data["id"], 'result':'ok'}).encode("utf-8"))
+        except Exception as e:
+            print ("Exception wile receiving message: ", e)
+"""
+def listener():
+    TCP_IP = '127.0.0.1'
+    TCP_PORT = 8005
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((TCP_IP,TCP_PORT))
+    s.listen(1)
+    conn, addr = s.accept()
+    data = ""
+    while True:
+        more = conn.recv(10).decode("ascii")
+        if more == "":
+            print("Listener connection is dead")
+            break
+        data += more
+        lines = data.splot("\n")
+        if lines[0] == "{":
+            msg = ""
+            for line in data.split("\n"):
+                msg += line
+                if line == "}":
+                    break
+        
+        print (data)
+        time.sleep(0.1)
+    conn.close()
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
 
     w = QtWidgets.QWidget()
     trayIcon = SystemTrayIcon(QtGui.QIcon("/opt/airtame/logo.png"), w)
 
+    """
+    server = InfoListener(('127.0.0.1', 8005), InfoListenerHandler)
+    thread = Thread(target=server.serve_forever)
+    thread.daemon = True
+    thread.start()
+    """
+    thread = Thread(target=listener)
+    thread.daemon = True
+    thread.start()
+    
     trayIcon.show()
     sys.exit(app.exec_())
 
