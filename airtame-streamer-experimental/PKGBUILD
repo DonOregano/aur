@@ -73,7 +73,7 @@ package() {
   #install our systemd user service
   cp airtame-streamer.service ${pkgdir}/usr/lib/systemd/user/
 
-  #copy the two executables we need to bin directory
+  #copy the executable to bin directory
   cp streamer/bin/airtame-streamer ${pkgdir}/opt/airtame/bin
 
   #copy the modules
