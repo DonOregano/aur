@@ -10,6 +10,7 @@ groups=()
 depends=()
 makedepends=()
 backup=()
+provides=("jsonrpc-c")
 options=()
 install=
 source=("$pkgname"::"git+https://github.com/airtame/jsonrpc-c.git")
